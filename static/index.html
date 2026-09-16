@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Margin Engine | Logistics Profitability Intelligence</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header style="margin-bottom: 2rem;">
+        <h1>Route Margin Engine</h1>
+        <p style="color: var(--text-muted);">Logistics Profitability & AI Risk Assessment Dashboard</p>
+    </header>
+
+    <main>
+        <!-- Calculation Form -->
+        <form id="route-form">
+            <div class="form-group">
+                <label for="origin">Origin City / State</label>
+                <input type="text" id="origin" name="origin" placeholder="e.g. Lagos, Nigeria" required>
+            </div>
+
+            <div class="form-group">
+                <label for="destination">Destination City / State</label>
+                <input type="text" id="destination" name="destination" placeholder="e.g. Kano, Nigeria" required>
+            </div>
+
+            <div class="form-group">
+                <label for="quoted_freight">Quoted Freight Price (NGN)</label>
+                <input type="number" id="quoted_freight" name="quoted_freight" placeholder="2800000" step="any" required>
+            </div>
+
+            <div class="form-group">
+                <label for="fuel_efficiency">Fuel Efficiency (km/L)</label>
+                <input type="number" id="fuel_efficiency" name="fuel_efficiency" placeholder="2.2" step="0.1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="diesel_price_per_l">Diesel Price per Liter (NGN)</label>
+                <input type="number" id="diesel_price_per_l" name="diesel_price_per_l" placeholder="1750" step="any" required>
+            </div>
+
+            <div class="form-group">
+                <label for="driver_allowance">Driver Allowance (NGN)</label>
+                <input type="number" id="driver_allowance" name="driver_allowance" placeholder="120000" step="any" required>
+            </div>
+
+            <div class="form-group">
+                <label for="truck_type">Truck / Vessel Type</label>
+                <select id="truck_type" name="truck_type" required>
+                    <option value="30-Ton Flatbed">30-Ton Flatbed</option>
+                    <option value="20-Ton Covered Truck">20-Ton Covered Truck</option>
+                    <option value="15-Ton Rigid Truck">15-Ton Rigid Truck</option>
+                    <option value="Cold Chain Reefer">Cold Chain Reefer</option>
+                    <option value="Tanker (Liquids)">Tanker (Liquids)</option>
+                </select>
+            </div>
+
+            <button type="submit" id="submit-btn">Analyze Route Margin</button>
+        </form>
+
+        <!-- Dynamic Results Container -->
+        <section id="results-output">
+            <!-- Results populated dynamically via app.js -->
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
