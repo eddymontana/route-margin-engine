@@ -5,14 +5,11 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-# Download dependencies first (go.sum* wildcard prevents failure if missing)
 COPY go.mod go.sum* ./
 RUN go mod download
 
-# Copy source files
 COPY . .
 
-# Compile static binary optimized for container execution
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o route-margin-engine .
 
 # ----------------------------------------------------
@@ -20,16 +17,15 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o route-margin-engine .
 # ----------------------------------------------------
 FROM alpine:3.20
 
-# Install SSL certificates for outgoing HTTPS calls
 RUN apk add --no-cache ca-certificates tzdata
 
-# Create non-root user for container security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
-# Copy binary from builder stage
+# Copy binary and static web assets from builder stage
 COPY --from=builder /app/route-margin-engine .
+COPY --from=builder /app/static ./static
 
 USER appuser
 
