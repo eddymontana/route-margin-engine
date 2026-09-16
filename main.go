@@ -17,7 +17,7 @@ import (
 var logger *slog.Logger
 
 func init() {
-	// Structured JSON Logging for GCP Cloud Run (Observability ready)
+	// Structured JSON Logging for GCP Cloud Run
 	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
 	// Parse local .env configuration file if present
@@ -53,14 +53,13 @@ func init() {
 func main() {
 	mux := http.NewServeMux()
 
-	// Helper to serve files from static/ directory with fallback to root directory
+	// Helper to serve static dashboard assets
 	serveStaticOrRoot := func(w http.ResponseWriter, r *http.Request, filename string) {
 		staticPath := filepath.Join("static", filename)
 		if _, err := os.Stat(staticPath); err == nil {
 			http.ServeFile(w, r, staticPath)
 			return
 		}
-		// Fallback to root directory if static/ directory is missing in build context
 		if _, err := os.Stat(filename); err == nil {
 			http.ServeFile(w, r, filename)
 			return
@@ -72,7 +71,6 @@ func main() {
 	// Static Dashboard Assets Routing
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
-			// Check if request is for any other static asset (e.g. favicon.ico, images)
 			serveStaticOrRoot(w, r, strings.TrimPrefix(r.URL.Path, "/"))
 			return
 		}
@@ -87,8 +85,8 @@ func main() {
 		serveStaticOrRoot(w, r, "style.css")
 	})
 
-	// Core API Endpoints: Protected with Rate Limiting
-	profitHandler := rateLimitMiddleware(http.HandlerFunc(handlers.HandleProfitCalculation))
+	// Core API Endpoints: Protected with Rate Limiting and CORS
+	profitHandler := corsMiddleware(rateLimitMiddleware(http.HandlerFunc(handlers.HandleProfitCalculation)))
 	mux.Handle("/api/v1/route-profit", profitHandler)
 	mux.Handle("/api/profit", profitHandler)
 
@@ -107,6 +105,22 @@ func main() {
 }
 
 // --- Middleware Architectures ---
+
+// corsMiddleware adds CORS headers and handles preflight OPTIONS requests
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 type clientLimiter struct {
 	tokens     float64
