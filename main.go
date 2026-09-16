@@ -53,24 +53,41 @@ func init() {
 func main() {
 	mux := http.NewServeMux()
 
+	// Helper to serve files from static/ directory with fallback to root directory
+	serveStaticOrRoot := func(w http.ResponseWriter, r *http.Request, filename string) {
+		staticPath := filepath.Join("static", filename)
+		if _, err := os.Stat(staticPath); err == nil {
+			http.ServeFile(w, r, staticPath)
+			return
+		}
+		// Fallback to root directory if static/ directory is missing in build context
+		if _, err := os.Stat(filename); err == nil {
+			http.ServeFile(w, r, filename)
+			return
+		}
+		logger.Error("Static file not found", "file", filename)
+		http.NotFound(w, r)
+	}
+
 	// Static Dashboard Assets Routing
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
-			http.NotFound(w, r)
+			// Check if request is for any other static asset (e.g. favicon.ico, images)
+			serveStaticOrRoot(w, r, strings.TrimPrefix(r.URL.Path, "/"))
 			return
 		}
-		http.ServeFile(w, r, filepath.Join("static", "index.html"))
+		serveStaticOrRoot(w, r, "index.html")
 	})
 
 	mux.HandleFunc("/app.js", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, filepath.Join("static", "app.js"))
+		serveStaticOrRoot(w, r, "app.js")
 	})
 
 	mux.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, filepath.Join("static", "style.css"))
+		serveStaticOrRoot(w, r, "style.css")
 	})
 
-	// Core API Endpoints: Protected with Rate Limiting (Alias registered for root /api/profit)
+	// Core API Endpoints: Protected with Rate Limiting
 	profitHandler := rateLimitMiddleware(http.HandlerFunc(handlers.HandleProfitCalculation))
 	mux.Handle("/api/v1/route-profit", profitHandler)
 	mux.Handle("/api/profit", profitHandler)
