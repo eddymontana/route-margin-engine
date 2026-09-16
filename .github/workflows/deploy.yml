@@ -1,0 +1,42 @@
+name: Deploy Route Margin Engine to Cloud Run 
+ 
+on: 
+  push: 
+    branches: 
+      - main 
+ 
+env: 
+  PROJECT_ID: route-margin-engine 
+  REGION: europe-west1 
+  SERVICE_NAME: route-margin-engine 
+  SERVICE_ACCOUNT: 1097034071715-compute@developer.gserviceaccount.com 
+ 
+jobs: 
+  deploy: 
+    runs-on: ubuntu-latest 
+    permissions: 
+      contents: read 
+      id-token: write 
+ 
+    steps: 
+      - name: Checkout Code 
+        uses: actions/checkout@v4 
+ 
+      - name: Authenticate to Google Cloud 
+        uses: google-github-actions/auth@v2 
+        with: 
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }} 
+          service_account: ${{ env.SERVICE_ACCOUNT }} 
+ 
+      - name: Set up Cloud SDK 
+        uses: google-github-actions/setup-gcloud@v2 
+ 
+      - name: Deploy to Cloud Run 
+        run: | 
+          gcloud run deploy ${{ env.SERVICE_NAME }} \ 
+            --source . \ 
+            --region ${{ env.REGION }} \ 
+            --project ${{ env.PROJECT_ID }} \ 
+            --allow-unauthenticated \ 
+            --max-instances 3 \ 
+            --set-env-vars "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" 
